@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
-
+from dotenv import dotenv_values
 import requests
 import re
 import math
 from statistics import mean
+
+config = dotenv_values(".env")
 
 def ua_category(user_agent):
   if isinstance(user_agent, str):
@@ -55,7 +57,8 @@ def ip_info2(ip):
 
 
 def ip_info(ip):
-    response = requests.get("https://proxycheck.io/v2/" + ip + "?key=210908-786s23-2zs2k9-w95x55&vpn=1&asn=1")
+    return [0, 0, 0, 0]
+    response = requests.get("https://proxycheck.io/v2/" + ip + "?key="+config['KEY']+"&vpn=1&asn=1")
     if 'asn' in response.json().keys() and response.json()[ip]['asn'] != False:
         word = response.json()['asn'].lower()
         regexp = re.compile('yandex|google')

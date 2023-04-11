@@ -1,35 +1,24 @@
 from functions import *
+from dotenv import dotenv_values
+from model import *
+config = dotenv_values(".env")
 
-data = pd.read_csv('user_data.csv', delimiter=',')
+db = mysql.connector.connect(
+    host=config['DB_HOST'],
+    user=config['DB_USERNAME'],
+    password=config['DB_PASSWORD'],
+    database=config['DB_DATABASE'],
+)
+sql = "SELECT HTTP_X_REAL_IP AS ip, HTTP_USER_AGENT AS 'user-agent', HTTP_ACCEPT_LANGUAGE AS 'lang', HTTP_COOKIE AS 'cookie', REQUEST_TIME AS 'time', REQUEST_METHOD AS 'method', REQUEST_URI AS 'uri' FROM user_data"
+data = pd.read_sql(sql, con=db)
+
+
 
 group = data.groupby('ip', as_index=False).groups
 
 prev = -1
 session_id = 0
 output = {}
-for ip in group:
-    prev = -1
-    if (len(group[ip]) > 1):
-        for idx in group[ip]:
-            if (prev != -1):
-                if (data.iloc[idx]['time'] - data.iloc[prev]['time'] < 1800):
-                    output[session_id].append(data.iloc[idx])
-                    prev = idx
-
-                else:
-                    session_id += 1
-                    output[session_id] = [data.iloc[idx]]
-                    prev = idx
-
-            else:
-                output[session_id] = [data.iloc[idx]]
-                prev = idx
-        session_id += 1
-
-
-print(ua_category("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:108.0) Gecko/20100101 Firefox/108.0"))
-
-print(ip_info('77.88.5.246'))
 
 def sessions(group):
     prev = -1
@@ -39,7 +28,7 @@ def sessions(group):
     if (len(group) > 1):
         for idx in group:
             if (prev != -1):
-                if (data.iloc[idx]['time'] - data.iloc[prev]['time'] < 1800):
+                if (int(data.iloc[idx]['time']) - int(data.iloc[prev]['time']) < 1800):
                     output[session_id].append(data.iloc[idx])
                     prev = idx
 
@@ -68,7 +57,7 @@ def sessions(group):
 
         time_gaps = []
         for n, x in enumerate(arr):
-            time_gaps.append(arr[n] - arr[n - 1])
+            time_gaps.append(int(arr[n]) - int(arr[n - 1]))
 
         time_gaps = time_gaps[1:]
         if (len(time_gaps) > 3):
@@ -122,8 +111,8 @@ def analys(group):
 
     return [get, post, blocked, cookie, lang, ru_lang, ua_changed, ua_anal]
 
-ip_data = [['ip', 'latitude', 'longitude', 'asn', 'proxy', 'queries_amount', 'mean_time_gap', 'avg_time_gap', 'session_amount', 'get', 'post', 'blocked', 'cookie', 'lang', 'ru_lang', 'ua_changed', 'ua_anal']]
-
+# ip_data = [['ip', 'latitude', 'longitude', 'asn', 'proxy', 'queries_amount', 'mean_time_gap', 'avg_time_gap', 'session_amount', 'get', 'post', 'blocked', 'cookie', 'lang', 'ru_lang', 'ua_changed', 'ua_anal']]
+ip_data = []
 for ip in group:
   if(len(group[ip]) > 1):
     [latitude, longitude, asn, proxy] = ip_info(ip)
@@ -133,6 +122,8 @@ for ip in group:
 
     ip_data.append([ip, latitude, longitude, asn, proxy, queries_amount, mean_time_gap, avg_time_gap, session_amount, get, post, blocked, cookie, lang, ru_lang, ua_changed, ua_anal])
 
-ip_df = pd.DataFrame(ip_data)
+ip_df = pd.DataFrame(ip_data, columns=['ip', 'latitude', 'longitude', 'asn', 'proxy', 'queries_amount', 'mean_time_gap', 'avg_time_gap', 'session_amount', 'get', 'post', 'blocked', 'cookie', 'lang', 'ru_lang', 'ua_changed', 'ua_anal'])
 
-ip_df.to_csv('output.csv', header=False, index=False)
+print(ip_df)
+
+predict_insert(ip_df)
