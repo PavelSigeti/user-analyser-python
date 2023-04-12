@@ -57,7 +57,7 @@ def ip_info2(ip):
 
 
 def ip_info(ip):
-    return [0, 0, 0, 0]
+    # return [0, 0, 0, 0]
     response = requests.get("https://proxycheck.io/v2/" + ip + "?key="+config['KEY']+"&vpn=1&asn=1")
     if 'asn' in response.json().keys() and response.json()[ip]['asn'] != False:
         word = response.json()['asn'].lower()

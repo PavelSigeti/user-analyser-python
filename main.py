@@ -1,7 +1,17 @@
 from functions import *
 from dotenv import dotenv_values
 from model import *
+
+import datetime
+
 config = dotenv_values(".env")
+
+today = datetime.datetime.now()
+today = today.replace(hour=0, minute=0, second=0, microsecond=0)
+yesterday = today - datetime.timedelta(days = 1)
+
+start = int(datetime.datetime.timestamp(yesterday))
+end = int(datetime.datetime.timestamp(today))
 
 db = mysql.connector.connect(
     host=config['DB_HOST'],
@@ -9,10 +19,8 @@ db = mysql.connector.connect(
     password=config['DB_PASSWORD'],
     database=config['DB_DATABASE'],
 )
-sql = "SELECT HTTP_X_REAL_IP AS ip, HTTP_USER_AGENT AS 'user-agent', HTTP_ACCEPT_LANGUAGE AS 'lang', HTTP_COOKIE AS 'cookie', REQUEST_TIME AS 'time', REQUEST_METHOD AS 'method', REQUEST_URI AS 'uri' FROM user_data"
+sql = "SELECT HTTP_X_REAL_IP AS ip, HTTP_USER_AGENT AS 'user-agent', HTTP_ACCEPT_LANGUAGE AS 'lang', HTTP_COOKIE AS 'cookie', REQUEST_TIME AS 'time', REQUEST_METHOD AS 'method', REQUEST_URI AS 'uri' FROM user_data WHERE REQUEST_TIME >= "+str(start)+" AND REQUEST_TIME < " + str(end)
 data = pd.read_sql(sql, con=db)
-
-
 
 group = data.groupby('ip', as_index=False).groups
 
