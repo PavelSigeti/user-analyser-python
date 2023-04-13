@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  tests:
+  Tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,3 +30,20 @@ jobs:
     - name: Test with unittest
       run: |
         python -m unittest unit.py
+
+  Deploy:
+    needs: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deployment
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SECRET_HOST }}
+          username: ${{ secrets.SECRET_USER }}
+          key: ${{ secrets.SECRET_KEY }}
+          port: 22
+          script: |
+            cd app/python
+            git pull
